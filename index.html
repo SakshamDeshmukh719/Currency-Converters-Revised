@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Currency Converter</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+    <script nomodule src="https://unpkg.com/@google/model-viewer/dist/model-viewer-legacy.js"></script>
+  </head>
+
+  <body>
+    <video autoplay muted id="background-video">
+      <source src="{{ url_for('static', filename='video/finalbg.mp4') }}" type="video/mp4">
+    </video>
+
+        <div class="input-1">
+        <select id="currency" class="currency" style="margin:0;margin-top:70px;" onchange="handleSelection('currency')">
+            {% for option in options %}
+                {% if option == "currency : name" %}
+                    <option value="Currency (From)">Currency (From)</option>
+                {% else %}
+                    <option value="{{ option }}">{{ option }}</option>
+                {% endif %}
+            {% endfor %}
+        </select>
+      <p style="margin-top:65px;">---To---</p>
+        <select id="currency-2" class="currency-2" style="margin:0;margin-top:70px;" onchange="handleSelection('currency-2')">
+            {% for option in options %}
+                {% if option == "currency : name" %}
+                    <option value="Currency (To)">Currency (To)</option>
+                {% else %}
+                    <option value="{{ option }}">{{ option }}</option>
+                {% endif %}
+            {% endfor %}
+        </select>
+    </div>
+
+    <script>
+        function handleSelection(item) {
+            const dropdown = document.getElementById(item);
+            const selectedValue = dropdown.value;
+            const selectedIndex = dropdown.selectedIndex;
+            currency = selectedValue.split(":");
+        }
+    </script>
+
+
+    <div class="input-2">
+      <input class="amount" type="text" placeholder="Amount" style="margin:0;margin-top:70px;">
+      <p style="margin-top:65px;">➔</p>
+      <input class="result" type="text" placeholder="Result" style="margin:0;margin-top:70px;">
+    </div>
+
+    <div class="three-d">
+      <model-viewer
+        src="{{ url_for('static', filename='img/bit_coin.glb') }}"
+        alt="bitcoin"
+        style="
+          width:300px;
+          height:200px;
+          background:transparent;
+          float:right;
+          margin-right:80px;
+          margin-top:0;
+          display:inline-block;
+        "
+        auto-rotate
+        camera-controls
+        shadow-intensity="1">
+      </model-viewer>
+    </div>
+
+    <button class="enter">Enter</button>
+
+    <script>
+      document.querySelector('.enter').addEventListener('click', async function() {
+        const fromVals = document.getElementById('currency').value.split(":");
+        const toVals = document.getElementById('currency-2').value.split(":");
+        const from = fromVals[0].trim();
+        const to = toVals[0].trim();
+        const amount = document.querySelector('.amount').value;
+        const resultBox = document.querySelector('.result');
+      resultBox.value = "";
+         
+        try {
+          const response = await fetch('/convert', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ from, to, amount })
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            resultBox.value = data.error ? JSON.stringify(data.error) : "Error converting.";
+          } else if (data.result !== undefined) {
+            resultBox.value = data.result;
+          } else {
+            resultBox.value = "Unexpected response.";
+          }
+        } catch (err) {
+          console.error(err);
+          resultBox.value = "Could not connect to backend.";
+        }
+          
+      });
+    </script>
+
+  </body>
+</html>
